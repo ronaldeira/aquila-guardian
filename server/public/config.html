@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aquila Guardian — Configuration</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--gold:#c9a84c;--bg:#0d0d0d;--card:#151515;--card2:#1a1a1a;--border:#222;--text:#f5f5f5;--dim:#888;--red:#ef4444;--green:#22c55e}
+body{background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,'Segoe UI',sans-serif;min-height:100vh;padding:2rem 1rem 4rem}
+.container{max-width:860px;margin:0 auto}
+header{display:flex;justify-content:space-between;align-items:center;margin-bottom:2rem;flex-wrap:wrap;gap:1rem}
+h1{font-size:1.4rem;font-weight:700;color:var(--gold)}
+.logout{background:none;border:1px solid var(--border);color:var(--dim);padding:.5rem 1rem;border-radius:6px;font-size:.8rem;cursor:pointer}
+.logout:hover{border-color:var(--red);color:var(--red)}
+.section{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:1.5rem;margin-bottom:1.2rem}
+h2{font-size:.95rem;font-weight:700;margin-bottom:1rem;color:var(--gold);text-transform:uppercase;letter-spacing:.05em}
+.hint{color:var(--dim);font-size:.8rem;margin-bottom:1rem;line-height:1.6}
+label{display:block;font-size:.75rem;color:var(--dim);margin-bottom:.4rem;text-transform:uppercase;letter-spacing:.04em}
+input,select,textarea{width:100%;padding:.7rem .9rem;background:var(--card2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:.9rem;font-family:inherit}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--gold)}
+textarea{resize:vertical;min-height:60px}
+.row{display:flex;gap:.6rem;margin-bottom:.6rem;flex-wrap:wrap}
+.row>*{flex:1;min-width:120px}
+.row .btn-sm{flex:0 0 auto;min-width:auto}
+.btn{background:var(--gold);color:var(--bg);border:none;padding:.7rem 1.2rem;border-radius:6px;font-size:.82rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;cursor:pointer}
+.btn:hover{background:var(--text)}
+.btn-sm{padding:.5rem .8rem;font-size:.75rem}
+.btn-danger{background:transparent;color:var(--red);border:1px solid var(--red)}
+.btn-danger:hover{background:var(--red);color:var(--bg)}
+.btn-ghost{background:transparent;color:var(--dim);border:1px solid var(--border)}
+.btn-ghost:hover{color:var(--text)}
+.list{margin-top:.8rem}
+.item{display:flex;align-items:center;gap:.8rem;padding:.7rem .9rem;background:var(--card2);border:1px solid var(--border);border-radius:6px;margin-bottom:.5rem;font-size:.85rem}
+.item .name{flex:1;font-family:'SF Mono',Menlo,monospace;font-size:.8rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.item .tag{font-size:.7rem;padding:.2rem .5rem;border-radius:4px;background:rgba(201,168,76,.1);color:var(--gold)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:.6rem}
+@media (max-width:600px){.grid2{grid-template-columns:1fr}}
+.save-bar{position:sticky;bottom:1rem;margin-top:1.5rem;background:var(--card);border:1px solid var(--gold);border-radius:10px;padding:1rem;display:flex;justify-content:space-between;align-items:center;gap:1rem;box-shadow:0 8px 32px rgba(0,0,0,.6)}
+.save-bar .status{font-size:.8rem;color:var(--dim)}
+.save-bar .status.ok{color:var(--green)}
+.save-bar .status.err{color:var(--red)}
+.consent-box{background:rgba(201,168,76,.06);border:1px solid rgba(201,168,76,.3);border-radius:8px;padding:1rem;margin-bottom:1rem}
+.consent-box label{display:flex;align-items:flex-start;gap:.6rem;cursor:pointer;text-transform:none;letter-spacing:normal;color:var(--text);font-size:.85rem;line-height:1.5}
+.consent-box input[type=checkbox]{width:auto;margin-top:.15rem}
+.voice-status{font-size:.8rem;color:var(--dim);margin:.5rem 0}
+.voice-status.has{color:var(--green)}
+.test-result{margin-top:.8rem;font-size:.8rem;padding:.7rem;border-radius:6px;background:var(--card2);white-space:pre-wrap;font-family:'SF Mono',Menlo,monospace;max-height:200px;overflow:auto}
+.empty-hint{color:var(--dim);font-size:.8rem;padding:.5rem 0}
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>⚙ Aquila Guardian</h1>
+    <button class="logout" id="logoutBtn">Sign out</button>
+  </header>
+
+  <div class="consent-box" id="consentBox" style="display:none">
+    <label>
+      <input type="checkbox" id="consent">
+      <span>I confirm that every emergency contact listed below has explicitly authorized me to send them alerts (Telegram, SMS, voice calls) in case of a security incident involving my crypto wallets. I accept full legal responsibility for this authorization.</span>
+    </label>
+  </div>
+
+  <div class="section">
+    <h2>🔔 Emergency Contacts</h2>
+    <p class="hint">Telegram is free. SMS and voice calls go through your own Twilio account and cost per-message. You need at least one contact on any channel to fire alerts.</p>
+
+    <div>
+      <label>Telegram Chat IDs</label>
+      <div class="row">
+        <input id="tgInput" placeholder="e.g. 123456789" type="text">
+        <button class="btn btn-sm" data-add="telegram">Add</button>
+      </div>
+      <div class="list" id="tgList"></div>
+    </div>
+
+    <div style="margin-top:1.2rem">
+      <label>SMS Phone Numbers (E.164: +55...)</label>
+      <div class="row">
+        <input id="smsInput" placeholder="+5511999999999" type="tel">
+        <button class="btn btn-sm" data-add="sms">Add</button>
+      </div>
+      <div class="list" id="smsList"></div>
+    </div>
+
+    <div style="margin-top:1.2rem">
+      <label>Voice Call Phone Numbers (E.164: +55...)</label>
+      <div class="row">
+        <input id="voiceInput" placeholder="+5511999999999" type="tel">
+        <button class="btn btn-sm" data-add="voice">Add</button>
+      </div>
+      <div class="list" id="voiceList"></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>💼 Watched Wallets</h2>
+    <p class="hint">When the public RPC detects an outgoing transaction from any of these addresses, Aquila fires the alert automatically. 18 networks supported.</p>
+    <div class="row">
+      <input id="wAddr" placeholder="0x... or bc1q...">
+      <select id="wNet"></select>
+    </div>
+    <div class="row">
+      <input id="wLabel" placeholder="Label (e.g. 'Cold wallet')">
+      <button class="btn btn-sm" id="addWalletBtn">Add wallet</button>
+    </div>
+    <div class="list" id="wList"></div>
+  </div>
+
+  <div class="section">
+    <h2>💬 Custom Alert Messages (optional)</h2>
+    <p class="hint">Override the default message per channel. Leave blank to use the auto-generated one.</p>
+    <div class="grid2">
+      <div>
+        <label>Telegram message</label>
+        <textarea id="msgTg" maxlength="500"></textarea>
+      </div>
+      <div>
+        <label>SMS message</label>
+        <textarea id="msgSms" maxlength="500"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>🎙 Voice Recording</h2>
+    <p class="hint">Record a short message that will be played to your voice contacts when Twilio calls. Requires mic permission. File is stored locally at <code>data/voice.mp3</code>.</p>
+    <div class="voice-status" id="voiceStatus">Checking…</div>
+    <div class="row">
+      <button class="btn btn-sm" id="recBtn">● Start recording</button>
+      <button class="btn btn-sm btn-ghost" id="uploadBtn" disabled>Upload</button>
+      <button class="btn btn-sm btn-danger" id="deleteVoiceBtn">Delete</button>
+    </div>
+    <audio id="preview" controls style="display:none;margin-top:.8rem;width:100%"></audio>
+  </div>
+
+  <div class="section">
+    <h2>🚨 Test Alert</h2>
+    <p class="hint">Fires a real alert to every configured contact using your Twilio/Telegram credentials. Use this once after setup to verify everything works.</p>
+    <button class="btn btn-danger" id="fireTestBtn">Fire test alert now</button>
+    <div class="test-result" id="testResult" style="display:none"></div>
+  </div>
+
+  <div class="save-bar">
+    <span class="status" id="status">Ready</span>
+    <button class="btn" id="saveBtn">Save configuration</button>
+  </div>
+</div>
+
+<script>
+// All DOM operations go through createElement / textContent — never innerHTML with
+// user-controlled data. This keeps the UI XSS-safe even if a config file on disk
+// gets hand-edited with hostile content.
+var state = { config: null };
+var NETWORKS = ['bitcoin','ethereum','solana','base','polygon','arbitrum','optimism','avalanche','bsc','fantom','gnosis','zksync','linea','scroll','celo','mantle','blast','tron'];
+
+function $(id) { return document.getElementById(id); }
+
+function setStatus(msg, cls) {
+  var s = $('status');
+  s.textContent = msg;
+  s.className = 'status ' + (cls || '');
+}
+
+function clearChildren(el) {
+  while (el.firstChild) el.removeChild(el.firstChild);
+}
+
+function createEl(tag, opts) {
+  var el = document.createElement(tag);
+  if (!opts) return el;
+  if (opts.className) el.className = opts.className;
+  if (opts.text != null) el.textContent = opts.text;
+  if (opts.onclick) el.addEventListener('click', opts.onclick);
+  if (opts.attrs) for (var k in opts.attrs) el.setAttribute(k, opts.attrs[k]);
+  return el;
+}
+
+async function loadConfig() {
+  var res = await fetch('/api/config');
+  if (res.status === 401) { window.location.href = '/login.html'; return; }
+  var data = await res.json();
+  state.config = data.config;
+  renderAll();
+}
+
+function renderAll() {
+  var c = state.config;
+  $('consentBox').style.display = c.consentAccepted ? 'none' : 'block';
+  $('consent').checked = c.consentAccepted;
+  renderContactList('tgList', c.contacts.telegram, 'telegram');
+  renderContactList('smsList', c.contacts.sms, 'sms');
+  renderContactList('voiceList', c.contacts.voice, 'voice');
+  renderWallets();
+  $('msgTg').value = c.customMessages.telegram || '';
+  $('msgSms').value = c.customMessages.sms || '';
+  populateNetworkSelect();
+}
+
+function populateNetworkSelect() {
+  var sel = $('wNet');
+  clearChildren(sel);
+  NETWORKS.forEach(function(n) {
+    var opt = createEl('option', { text: n, attrs: { value: n } });
+    sel.appendChild(opt);
+  });
+}
+
+function renderContactList(listId, arr, type) {
+  var list = $(listId);
+  clearChildren(list);
+  if (arr.length === 0) {
+    list.appendChild(createEl('div', { className: 'empty-hint', text: 'No contacts yet.' }));
+    return;
+  }
+  arr.forEach(function(item, i) {
+    var row = createEl('div', { className: 'item' });
+    row.appendChild(createEl('span', { className: 'name', text: item }));
+    row.appendChild(createEl('button', {
+      className: 'btn btn-sm btn-danger',
+      text: '×',
+      onclick: function() { removeContact(type, i); }
+    }));
+    list.appendChild(row);
+  });
+}
+
+function renderWallets() {
+  var list = $('wList');
+  clearChildren(list);
+  var wallets = state.config.wallets;
+  if (wallets.length === 0) {
+    list.appendChild(createEl('div', { className: 'empty-hint', text: 'No wallets watched yet.' }));
+    return;
+  }
+  wallets.forEach(function(w, i) {
+    var row = createEl('div', { className: 'item' });
+    row.appendChild(createEl('span', { className: 'name', text: w.label || w.address }));
+    row.appendChild(createEl('span', { className: 'tag', text: w.network }));
+    row.appendChild(createEl('button', {
+      className: 'btn btn-sm btn-danger',
+      text: '×',
+      onclick: function() { removeWallet(i); }
+    }));
+    list.appendChild(row);
+  });
+}
+
+function addContact(type) {
+  var inputId = type === 'telegram' ? 'tgInput' : (type === 'sms' ? 'smsInput' : 'voiceInput');
+  var val = $(inputId).value.trim();
+  if (!val) return;
+  state.config.contacts[type].push(val);
+  $(inputId).value = '';
+  renderAll();
+}
+
+function removeContact(type, i) {
+  state.config.contacts[type].splice(i, 1);
+  renderAll();
+}
+
+function addWallet() {
+  var addr = $('wAddr').value.trim();
+  var net = $('wNet').value;
+  var label = $('wLabel').value.trim();
+  if (!addr) return;
+  state.config.wallets.push({ address: addr, network: net, label: label, active: true });
+  $('wAddr').value = '';
+  $('wLabel').value = '';
+  renderAll();
+}
+
+function removeWallet(i) {
+  state.config.wallets.splice(i, 1);
+  renderAll();
+}
+
+async function saveConfig() {
+  state.config.customMessages.telegram = $('msgTg').value;
+  state.config.customMessages.sms = $('msgSms').value;
+  state.config.consentAccepted = $('consent').checked;
+  setStatus('Saving…');
+  var res = await fetch('/api/config', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ config: state.config })
+  });
+  if (res.ok) {
+    var data = await res.json();
+    state.config = data.config;
+    renderAll();
+    setStatus('Saved ✓', 'ok');
+  } else {
+    setStatus('Save failed', 'err');
+  }
+}
+
+async function logout() {
+  await fetch('/api/auth/logout', { method: 'POST' });
+  window.location.href = '/login.html';
+}
+
+async function fireTest() {
+  var r = $('testResult');
+  r.style.display = 'block';
+  r.textContent = 'Firing test alert…';
+  try {
+    var res = await fetch('/api/alert', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: 'TEST ALERT — ignore this message.' })
+    });
+    var data = await res.json();
+    r.textContent = JSON.stringify(data, null, 2);
+  } catch (e) {
+    r.textContent = 'Error: ' + e.message;
+  }
+}
+
+// ===== Voice recording =====
+var recorder = null;
+var chunks = [];
+var recordedBlob = null;
+
+async function loadVoiceStatus() {
+  var res = await fetch('/api/voice/status');
+  var data = await res.json();
+  var el = $('voiceStatus');
+  if (data.exists) {
+    el.textContent = '✓ Recording uploaded (' + Math.round(data.size / 1024) + ' KB)';
+    el.className = 'voice-status has';
+  } else {
+    el.textContent = 'No recording yet.';
+    el.className = 'voice-status';
+  }
+}
+
+async function toggleRecord() {
+  var btn = $('recBtn');
+  if (!recorder || recorder.state === 'inactive') {
+    try {
+      var stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      recorder = new MediaRecorder(stream);
+      chunks = [];
+      recorder.ondataavailable = function(e) { chunks.push(e.data); };
+      recorder.onstop = function() {
+        recordedBlob = new Blob(chunks, { type: 'audio/webm' });
+        var url = URL.createObjectURL(recordedBlob);
+        var preview = $('preview');
+        preview.src = url;
+        preview.style.display = 'block';
+        $('uploadBtn').disabled = false;
+        stream.getTracks().forEach(function(t) { t.stop(); });
+      };
+      recorder.start();
+      btn.textContent = '■ Stop recording';
+    } catch (e) {
+      alert('Microphone access denied or unavailable: ' + e.message);
+    }
+  } else {
+    recorder.stop();
+    btn.textContent = '● Start recording';
+  }
+}
+
+async function uploadVoice() {
+  if (!recordedBlob) return;
+  // The backend accepts any audio/* MIME for the MVP. Note: browsers record webm
+  // by default, so for optimal Twilio compatibility you may want to transcode to
+  // mp3 with ffmpeg before hitting the upload. A future version can do this
+  // server-side — tracked in README.
+  var res = await fetch('/api/voice/upload', {
+    method: 'POST',
+    headers: { 'Content-Type': 'audio/mpeg' },
+    body: recordedBlob
+  });
+  if (res.ok) {
+    await loadVoiceStatus();
+    alert('Voice uploaded. Note: browsers record webm — for best Twilio compatibility, transcode to mp3 before upload in a future version.');
+  } else {
+    var data = await res.json();
+    alert('Upload failed: ' + (data.error || 'unknown'));
+  }
+}
+
+async function deleteVoice() {
+  if (!confirm('Delete the current voice recording?')) return;
+  await fetch('/api/voice', { method: 'DELETE' });
+  loadVoiceStatus();
+}
+
+// Event wiring — done once on load to avoid inline onclick handlers
+document.addEventListener('DOMContentLoaded', function() {
+  $('logoutBtn').addEventListener('click', logout);
+  $('addWalletBtn').addEventListener('click', addWallet);
+  $('saveBtn').addEventListener('click', saveConfig);
+  $('fireTestBtn').addEventListener('click', fireTest);
+  $('recBtn').addEventListener('click', toggleRecord);
+  $('uploadBtn').addEventListener('click', uploadVoice);
+  $('deleteVoiceBtn').addEventListener('click', deleteVoice);
+
+  document.querySelectorAll('[data-add]').forEach(function(btn) {
+    btn.addEventListener('click', function() { addContact(btn.getAttribute('data-add')); });
+  });
+
+  loadConfig();
+  loadVoiceStatus();
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,28 @@
+{
+  "name": "aquila-guardian",
+  "version": "1.0.0",
+  "description": "Self-hosted duress alert system for crypto wallets. Detects outgoing transactions and sends emergency alerts via Telegram, SMS, and Voice.",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node --watch server/index.js"
+  },
+  "keywords": [
+    "crypto",
+    "wallet",
+    "security",
+    "duress",
+    "alert",
+    "self-hosted",
+    "twilio",
+    "telegram"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "dotenv": "^17.4.1",
+    "express": "^4.21.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

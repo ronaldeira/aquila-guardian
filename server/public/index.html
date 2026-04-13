@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Aquila Guardian</title>
+<script>
+fetch('/api/auth/session')
+  .then(function(r) { return r.json(); })
+  .then(function(d) {
+    window.location.href = d.authenticated ? '/config.html' : '/login.html';
+  })
+  .catch(function() { window.location.href = '/login.html'; });
+</script>
+</head>
+<body>
+<p style="font-family:system-ui;color:#888;text-align:center;padding:2rem">Loading…</p>
+</body>
+</html>

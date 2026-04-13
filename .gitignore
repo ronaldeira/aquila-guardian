@@ -1,0 +1,13 @@
+node_modules/
+.env
+.env.local
+
+# Runtime data — NEVER commit (contains contacts, wallets, voice recordings)
+server/data/*
+!server/data/.gitkeep
+
+# Editor / OS
+.DS_Store
+*.log
+.vscode/
+.idea/
