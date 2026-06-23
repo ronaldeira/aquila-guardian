@@ -50,8 +50,24 @@ APP INSTALADOR AQUILA  (user downloads ONE thing)
 **A is a library of orchestratable tools.** It does not own the UI, the LLM connection,
 the guide persona, or the license gate. It is consumed by Subsystem B (the agent/host).
 
+### Two entry points
+A supports two ways to reach a deployable VPS, because the deploy/HTTPS/verify tools are
+**provider-agnostic** (they only need SSH to an Ubuntu host):
+
+1. **Hostinger (auto)** — A provisions a fresh VPS via the Hostinger API (referral path).
+2. **Bring Your Own VPS (BYO-VPS)** — the user already has a VPS (any provider, or a
+   home lab with a public IP). A **skips provisioning** and starts at `deploy_aquila`,
+   given the user's IP + SSH credential.
+
+Both paths converge on the same deploy → HTTPS → verify tools. This is essentially free:
+the test strategy already deploys to a non-Hostinger SSH target (a local Docker
+container), so the BYO-VPS path reuses the same tested code.
+
 ### In scope
-- Provision a VPS on **Hostinger** via Hostinger's public API.
+- Provision a VPS on **Hostinger** via Hostinger's public API (entry point 1).
+- Accept a user-supplied VPS via SSH (entry point 2, BYO-VPS).
+- A **preflight check** on any target (Ubuntu/Debian, `sudo`, ports 80/443, public IP)
+  that reports failures in plain language instead of crashing mid-deploy.
 - Deploy the Aquila Guardian Docker image onto that VPS over SSH.
 - Write the VPS `.env` from the collected secrets (and generate `WEBHOOK_SECRET`).
 - Stand up **public HTTPS** so Twilio voice works, with no domain owned by the user.
@@ -92,13 +108,17 @@ supported; a short spike against a real token confirms before building.
 Each tool has a clear interface and returns a **structured result or a structured,
 human-readable error** the agent can relay. All tools are **idempotent**.
 
-| Tool | Input | Output | Notes |
-|---|---|---|---|
-| `provision_vps` | Hostinger token, plan, datacenter, generated SSH public key | `{ vpsId, status }` | Wraps official Hostinger MCP. Idempotent: if a tagged VPS already exists in state, returns it. |
-| `wait_for_vps` | `vpsId` | `{ ip, ready: true }` | Polls until SSH-reachable; bounded timeout. |
-| `deploy_aquila` | `ip`, SSH private key, secrets bundle | `{ deployed: true }` | SSH in → ensure Docker → write `.env` (generate `WEBHOOK_SECRET` via `openssl rand -hex 32`) → `docker compose pull && up -d`. |
-| `setup_https` | `ip` | `{ publicUrl }` | Install/configure Caddy → reverse-proxy `:3000` behind `https://<ip-dashed>.sslip.io` with auto-TLS. Sets `PUBLIC_HOST` accordingly and restarts Aquila. |
-| `verify_deployment` | `publicUrl` | `{ healthy: true }` | GET `/health` over HTTPS; assert expected response. |
+| Tool | Input | Output | Path | Notes |
+|---|---|---|---|---|
+| `provision_vps` | Hostinger token, plan, datacenter, generated SSH public key | `{ vpsId, status }` | Hostinger only | Wraps official Hostinger MCP. Idempotent: if a tagged VPS already exists in state, returns it. |
+| `wait_for_vps` | `vpsId` | `{ ip, ready: true }` | Hostinger only | Polls until SSH-reachable; bounded timeout. |
+| `preflight_check` | `ip`, SSH credential | `{ ok, issues[] }` | Both (required for BYO-VPS) | Verifies Ubuntu/Debian + `sudo` + ports 80/443 + public IP. Plain-language `issues[]`. Gates `deploy_aquila`. |
+| `deploy_aquila` | `ip`, SSH credential, secrets bundle | `{ deployed: true }` | Both | SSH in → ensure Docker → write `.env` (generate `WEBHOOK_SECRET` via `openssl rand -hex 32`) → `docker compose pull && up -d`. |
+| `setup_https` | `ip` | `{ publicUrl }` | Both | Install/configure Caddy → reverse-proxy `:3000` behind `https://<ip-dashed>.sslip.io` with auto-TLS. Sets `PUBLIC_HOST` accordingly and restarts Aquila. NAT'd hosts (no public IP) fail here → Cloudflare Tunnel fallback (deferred). |
+| `verify_deployment` | `publicUrl` | `{ healthy: true }` | Both | GET `/health` over HTTPS; assert expected response. |
+
+For BYO-VPS, the SSH credential may be a key **or** a password the user provides; for the
+Hostinger path A generates and injects its own SSH keypair.
 
 The **secrets bundle** passed into `deploy_aquila`: `ADMIN_PASSWORD`, `TELEGRAM_BOT_TOKEN`,
 `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_SMS_FROM`, `TWILIO_VOICE_FROM`.
@@ -106,8 +126,11 @@ The **secrets bundle** passed into `deploy_aquila`: `ADMIN_PASSWORD`, `TELEGRAM_
 `setup_https` (A) once the URL is known.
 
 ### Orchestration order
-`provision_vps → wait_for_vps → deploy_aquila → setup_https → verify_deployment`.
-The agent (B) drives this order; A makes each step independently runnable and resumable.
+- **Hostinger path:** `provision_vps → wait_for_vps → preflight_check → deploy_aquila → setup_https → verify_deployment`.
+- **BYO-VPS path:** `preflight_check → deploy_aquila → setup_https → verify_deployment` (provisioning skipped).
+
+The agent (B) picks the entry point and drives the order; A makes each step independently
+runnable and resumable.
 
 ---
 
@@ -152,13 +175,16 @@ which steps completed and the artifacts produced (`vpsId`, `ip`, `publicUrl`). R
 
 ## 8. Success criteria
 
-1. Given a valid Hostinger token + a complete secrets bundle, running the five tools in
-   order yields a live Aquila reachable at an `https://<ip>.sslip.io` URL whose `/health`
-   passes — with **no manual step on the VPS**.
-2. Re-running after a mid-way failure **resumes** without creating a second VPS.
-3. Full deploy-path test suite passes against the local Docker "VPS" with the Hostinger
+1. **Hostinger path:** given a valid Hostinger token + a complete secrets bundle, running
+   the tools in order yields a live Aquila reachable at an `https://<ip>.sslip.io` URL
+   whose `/health` passes — with **no manual step on the VPS**.
+2. **BYO-VPS path:** given an IP + SSH credential to a fresh Ubuntu host + a complete
+   secrets bundle, `preflight_check → deploy_aquila → setup_https → verify_deployment`
+   yields the same healthy result (this is what the local-Docker test target exercises).
+3. Re-running after a mid-way failure **resumes** without creating a second VPS.
+4. Full deploy-path test suite passes against the local Docker "VPS" with the Hostinger
    API mocked, in CI, spending nothing.
-4. All five tools return structured, human-readable errors (no raw stack traces) for the
+5. All six tools return structured, human-readable errors (no raw stack traces) for the
    common failure modes (bad token, no balance, VPS not ready, health-check fail).
 
 ---
