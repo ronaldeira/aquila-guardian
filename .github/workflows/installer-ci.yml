@@ -17,7 +17,11 @@ jobs:
       - name: Dependency audit (high+)
         run: npm audit --omit=dev --audit-level=high
       - name: Secret scan (no secrets committed)
+        # Full-strength pattern (any non-empty value, including short/weak secrets).
+        # *.test.js is excluded because test files assert on rendered .env output
+        # (e.g. /^ADMIN_PASSWORD=pw$/) — those are fixtures, not committed secrets.
+        # Shipped source, helpers, and JSON are still scanned at full strength.
         run: |
-          ! grep -rEn '(TWILIO_AUTH_TOKEN|ADMIN_PASSWORD|WEBHOOK_SECRET)=[^[:space:]]{16,}' \
-            --include='*.js' --include='*.json' src test || \
+          ! grep -rEn '(TWILIO_AUTH_TOKEN|ADMIN_PASSWORD|WEBHOOK_SECRET)=[^[:space:]]+' \
+            --include='*.js' --include='*.json' --exclude='*.test.js' src test || \
             (echo 'Secret-looking value committed' && exit 1)
