@@ -38,6 +38,15 @@ test('returns HTTPS_FAILED when caddy reload fails', async function () {
   assert.strictEqual(r.code, 'HTTPS_FAILED');
 });
 
+test('returns BAD_INPUT when ip is not a valid IPv4', async function () {
+  var execs = [];
+  var ssh = { exec: function (cmd) { execs.push(cmd); return Promise.resolve({ code: 0, stdout: '', stderr: '' }); }, putFile: function () { return Promise.resolve(); } };
+  var r = await setupHttps({ ssh: ssh, ip: 'not-an-ip', state: st() });
+  assert.strictEqual(r.ok, false);
+  assert.strictEqual(r.code, 'BAD_INPUT');
+  assert.strictEqual(execs.length, 0, 'no SSH execs should have been called');
+});
+
 test('returns HTTPS_FAILED when final restart exec fails', async function () {
   var ssh = makeFakeSsh({ responses: {
     'caddy version': { code: 0, stdout: 'v2', stderr: '' },

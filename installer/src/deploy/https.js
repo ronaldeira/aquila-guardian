@@ -1,5 +1,6 @@
 var { ok, fail, ERROR_CODES } = require('../result');
 var { markStep, isDone } = require('../state');
+var { shQuote, isIpv4 } = require('../sh');
 
 function ipToSslip(ip) {
   return String(ip).split('.').join('-') + '.sslip.io';
@@ -11,6 +12,10 @@ function caddyfile(host, port) {
 
 async function setupHttps(args) {
   var state = args.state;
+  if (!isIpv4(args.ip)) {
+    return fail(ERROR_CODES.BAD_INPUT, 'invalid IPv4: ' + args.ip,
+      'sslip.io HTTPS needs a public IPv4 address. The server IP looks malformed.');
+  }
   var host = ipToSslip(args.ip);
   var publicUrl = 'https://' + host;
   if (state && isDone(state, 'https')) return ok({ publicUrl: publicUrl });
@@ -43,7 +48,7 @@ async function setupHttps(args) {
 
   // 3. Set PUBLIC_HOST in .env and restart Aquila so Twilio voice URLs are correct.
   var restart = await ssh.exec(
-    'cd ' + remoteDir + ' && sudo sed -i "/^PUBLIC_HOST=/d" .env && ' +
+    'cd ' + shQuote(remoteDir) + ' && sudo sed -i "/^PUBLIC_HOST=/d" .env && ' +
     'echo "PUBLIC_HOST=' + publicUrl + '" | sudo tee -a .env > /dev/null && ' +
     'sudo docker compose up -d');
   if (restart.code !== 0) {

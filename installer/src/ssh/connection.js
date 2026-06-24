@@ -1,4 +1,5 @@
 var { ok, fail, ERROR_CODES } = require('../result');
+var { shQuote } = require('../sh');
 
 function connectSsh(args) {
   return new Promise(function (resolve) {
@@ -27,10 +28,6 @@ function connectSsh(args) {
       readyTimeout: args.readyTimeout || 20000
     });
   });
-}
-
-function shQuote(s) {
-  return "'" + String(s).replace(/'/g, "'\\''") + "'";
 }
 
 function makeIface(conn) {

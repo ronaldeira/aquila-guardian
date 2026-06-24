@@ -2,6 +2,7 @@ var { ok, fail, ERROR_CODES } = require('../result');
 var { renderEnv } = require('../env-render');
 var { generateWebhookSecret } = require('../secrets');
 var { markStep, isDone } = require('../state');
+var { shQuote } = require('../sh');
 
 function composeYaml(image, port) {
   return [
@@ -50,12 +51,12 @@ async function deployAquila(args) {
   }
 
   // 2. Write files.
-  await ssh.exec('sudo mkdir -p ' + remoteDir + '/data');
+  await ssh.exec('sudo mkdir -p ' + shQuote(remoteDir + '/data'));
   await ssh.putFile(rendered.env, remoteDir + '/.env');
   await ssh.putFile(composeYaml(args.image, port), remoteDir + '/docker-compose.yml');
 
   // 3. Pull + up.
-  var up = await ssh.exec('cd ' + remoteDir + ' && sudo docker compose pull && sudo docker compose up -d');
+  var up = await ssh.exec('cd ' + shQuote(remoteDir) + ' && sudo docker compose pull && sudo docker compose up -d');
   if (up.code !== 0) {
     return fail(ERROR_CODES.DEPLOY_FAILED, 'docker compose up failed: ' + up.stderr,
       'The Aquila container did not start. This is usually a transient pull error — try resuming.');
