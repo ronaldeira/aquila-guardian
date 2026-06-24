@@ -29,6 +29,10 @@ function connectSsh(args) {
   });
 }
 
+function shQuote(s) {
+  return "'" + String(s).replace(/'/g, "'\\''") + "'";
+}
+
 function makeIface(conn) {
   function exec(cmd) {
     return new Promise(function (resolve, reject) {
@@ -44,9 +48,11 @@ function makeIface(conn) {
     });
   }
   function putFile(content, remotePath) {
-    // Write via a heredoc-free base64 pipe to avoid quoting issues.
+    if (!remotePath || typeof remotePath !== 'string') {
+      return Promise.reject(new Error('putFile: remotePath must be a non-empty string'));
+    }
     var b64 = Buffer.from(content, 'utf8').toString('base64');
-    return exec("echo '" + b64 + "' | base64 -d | sudo tee " + remotePath + " > /dev/null")
+    return exec("echo '" + b64 + "' | base64 -d | sudo tee " + shQuote(remotePath) + " > /dev/null")
       .then(function (r) {
         if (r.code !== 0) throw new Error('putFile failed: ' + r.stderr);
       });
