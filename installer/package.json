@@ -1,0 +1,14 @@
+{
+  "name": "aquila-installer-core",
+  "version": "0.1.0",
+  "description": "Automation core: provision a VPS and deploy Aquila Guardian over SSH.",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "node --test",
+    "test:integration": "RUN_INTEGRATION=1 node --test test/integration.test.js",
+    "audit": "npm audit --omit=dev"
+  },
+  "license": "MIT",
+  "engines": { "node": ">=20.0.0" },
+  "dependencies": { "ssh2": "^1.15.0" }
+}
