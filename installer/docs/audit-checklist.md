@@ -144,13 +144,18 @@ cd installer && node --test test/preflight.test.js
 **CI secret-scan command** (run by `.github/workflows/installer-ci.yml`):
 
 ```bash
-! grep -rEn '(TWILIO_AUTH_TOKEN|ADMIN_PASSWORD|WEBHOOK_SECRET)=[^[:space:]]{16,}' \
-  --include='*.js' --include='*.json' src test || \
+! grep -rEn '(TWILIO_AUTH_TOKEN|ADMIN_PASSWORD|WEBHOOK_SECRET)=[^[:space:]]+' \
+  --include='*.js' --include='*.json' --exclude='*.test.js' src test || \
   (echo 'Secret-looking value committed' && exit 1)
 ```
 
 Auditors can run this command directly from the `installer/` directory.
 Expected: no output (grep finds no matches).
+
+Note: the pattern uses `+` (any non-empty value, no length gate) and excludes
+`*.test.js` because test fixtures assert on rendered `.env` output (e.g.
+`/^ADMIN_PASSWORD=pw$/`) — those are test fixtures, not committed secrets.
+Shipped source, helpers, and JSON are still scanned at full strength.
 
 **Auditor read:**
 - `.github/workflows/installer-ci.yml` (the `Secret scan` step).

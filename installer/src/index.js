@@ -11,8 +11,13 @@ var { verifyDeployment } = require('./deploy/verify');
 
 async function runInstall(opts) {
   var deps = opts.deps || {};
-  var state = loadState({ installId: opts.installId, dir: opts.stateDir })
-    || createState({ installId: opts.installId, provider: opts.entryPoint, dir: opts.stateDir });
+  var loaded = loadState({ installId: opts.installId, dir: opts.stateDir });
+  if (loaded !== null && loaded.provider !== opts.entryPoint) {
+    return fail(ERROR_CODES.BAD_INPUT,
+      'entryPoint mismatch: state was created as ' + loaded.provider + ' but resumed as ' + opts.entryPoint,
+      'This install id was started with a different method. Use a new installId or the original entry point.');
+  }
+  var state = loaded || createState({ installId: opts.installId, provider: opts.entryPoint, dir: opts.stateDir });
 
   var ip;
 

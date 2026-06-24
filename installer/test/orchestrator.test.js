@@ -52,6 +52,19 @@ test('resume: second run with completed state still returns url', async function
   assert.strictEqual(r2.publicUrl, 'https://203-0-113-5.sslip.io');
 });
 
+test('resume with mismatched entryPoint returns BAD_INPUT without throw', async function () {
+  var dir = stateDir();
+  var common = { installId: 'o4', stateDir: dir,
+    secrets: { ADMIN_PASSWORD: 'pw', TELEGRAM_BOT_TOKEN: 'tg' },
+    image: 'ghcr.io/x/aquila-guardian:1.0.0' };
+  // First run: byo
+  await runInstall(Object.assign({}, common, { entryPoint: 'byo', deps: fakeDeps() }));
+  // Second run: different entryPoint
+  var r = await runInstall(Object.assign({}, common, { entryPoint: 'hostinger', deps: fakeDeps() }));
+  assert.strictEqual(r.ok, false);
+  assert.strictEqual(r.code, ERROR_CODES.BAD_INPUT);
+});
+
 test('putFile rejection resolves to structured fail (does not throw)', async function () {
   var ssh = makeFakeSsh({ responses: {
     '/etc/os-release': { code: 0, stdout: 'ID=ubuntu', stderr: '' },

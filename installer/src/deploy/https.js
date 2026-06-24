@@ -42,10 +42,14 @@ async function setupHttps(args) {
   }
 
   // 3. Set PUBLIC_HOST in .env and restart Aquila so Twilio voice URLs are correct.
-  await ssh.exec(
+  var restart = await ssh.exec(
     'cd ' + remoteDir + ' && sudo sed -i "/^PUBLIC_HOST=/d" .env && ' +
     'echo "PUBLIC_HOST=' + publicUrl + '" | sudo tee -a .env > /dev/null && ' +
     'sudo docker compose up -d');
+  if (restart.code !== 0) {
+    return fail(ERROR_CODES.HTTPS_FAILED, 'PUBLIC_HOST update/restart failed: ' + restart.stderr,
+      'The HTTPS host was configured but Aquila did not restart cleanly. You can safely resume.');
+  }
 
   if (state) markStep(state, 'https', { publicUrl: publicUrl });
   return ok({ publicUrl: publicUrl });

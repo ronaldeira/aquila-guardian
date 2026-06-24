@@ -37,3 +37,14 @@ test('returns HTTPS_FAILED when caddy reload fails', async function () {
   assert.strictEqual(r.ok, false);
   assert.strictEqual(r.code, 'HTTPS_FAILED');
 });
+
+test('returns HTTPS_FAILED when final restart exec fails', async function () {
+  var ssh = makeFakeSsh({ responses: {
+    'caddy version': { code: 0, stdout: 'v2', stderr: '' },
+    'systemctl reload caddy': { code: 0, stdout: '', stderr: '' },
+    'docker compose up -d': { code: 1, stdout: '', stderr: 'boom' }
+  }});
+  var r = await setupHttps({ ssh: ssh, ip: '203.0.113.5', port: 3000, state: st() });
+  assert.strictEqual(r.ok, false);
+  assert.strictEqual(r.code, 'HTTPS_FAILED');
+});

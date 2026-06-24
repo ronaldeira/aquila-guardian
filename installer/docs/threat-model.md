@@ -198,6 +198,46 @@ production install.
 
 ---
 
+## T-09 Supply-chain attack via remote install scripts
+
+**Threat:** The deploy and HTTPS setup steps fetch and execute remote scripts as
+root on the user's VPS:
+
+- `src/deploy/deploy-aquila.js`: `curl -fsSL https://get.docker.com | sudo sh`
+- `src/deploy/https.js`: Caddy GPG key and apt-list fetched from
+  `dl.cloudsmith.io` via `curl … | sudo gpg --dearmor` and `curl … | sudo tee`
+
+A compromised `get.docker.com` or `cloudsmith.io` endpoint (DNS hijack, BGP
+hijack, CDN compromise, or account takeover at the upstream vendor) could serve
+a modified script that runs arbitrary code as root on the operator's VPS during
+installation.
+
+**Likelihood:** Low. Both endpoints are official upstream install channels
+(Docker Inc. and Cloudsmith/Caddy). The operators' exposure window is limited to
+the single install run.
+
+**Mitigation (current):**
+- Official upstream install channels are used — the same paths recommended in
+  each project's own documentation.
+- The preflight check (`src/deploy/preflight.js`) verifies the server has a
+  public IP and is a supported Debian/Ubuntu system before the fetch commands
+  run.
+
+**Accepted risk:** The installer trusts `get.docker.com` and `cloudsmith.io`
+exactly as the Docker and Caddy official documentation prescribe. This is the
+industry-standard bootstrap pattern and is documented here for transparency.
+
+**Possible future hardening:**
+- Pin the Docker install to a known apt repo + specific package version instead
+  of piping the convenience script, removing the curl-pipe-to-root step.
+- Alongside the already-deferred image-digest pinning (T-03), verify Caddy
+  package checksums against a pinned known-good value after download.
+
+**Status:** ACCEPTED (documented). Pinning the Docker apt repo is a possible
+future hardening, tracked alongside T-03.
+
+---
+
 ## Known follow-ups (accepted/deferred, not blocking)
 
 | Item | Status |
@@ -205,3 +245,4 @@ production install.
 | SSH host-key pinning | Deferred |
 | Docker image digest pinning | Deferred |
 | Cloudflare Tunnel fallback for NAT'd BYO-VPS | Deferred |
+| Pin Docker apt repo + version (remove curl-pipe-to-root) | Deferred |
