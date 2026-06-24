@@ -25,3 +25,16 @@ test('fails with issues on non-debian without sudo', async function () {
   assert.strictEqual(r.code, 'PREFLIGHT_FAILED');
   assert.ok(r.issues.length >= 2);
 });
+
+test('fails when curl returns no public IPv4 (NAT/private server)', async function () {
+  var ssh = makeFakeSsh({ responses: {
+    '/etc/os-release': { code: 0, stdout: 'ID=ubuntu\nVERSION_ID="22.04"', stderr: '' },
+    'sudo -n true': { code: 0, stdout: '', stderr: '' },
+    'curl': { code: 0, stdout: '', stderr: '' }
+  }});
+  var r = await preflightCheck({ ssh: ssh });
+  assert.strictEqual(r.ok, false);
+  assert.strictEqual(r.code, 'PREFLIGHT_FAILED');
+  assert.ok(r.issues.some(function (s) { return /public IPv4|NAT/i.test(s); }),
+    'expected an issue mentioning public IPv4 or NAT, got: ' + JSON.stringify(r.issues));
+});

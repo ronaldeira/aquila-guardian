@@ -125,7 +125,8 @@ cd installer && node --test test/orchestrator.test.js
 | Claim | Evidence |
 |---|---|
 | A server without a public IPv4 is rejected before deployment | `src/deploy/preflight.js` lines 14-17: probes `api.ipify.org`; fails if no valid IPv4 returned |
-| Test proves the check runs and fails on bad servers | `test/preflight.test.js` — "fails with issues on non-debian without sudo" |
+| Test proves the OS/sudo checks fail on bad servers | `test/preflight.test.js` — "fails with issues on non-debian without sudo" |
+| Test proves a server without a public IPv4 is rejected | `test/preflight.test.js` — "fails when curl returns no public IPv4 (NAT/private server)" |
 
 **Auditor command:**
 ```bash
@@ -179,7 +180,7 @@ should verify by reading the indicated source lines.
 
 | Host | Source |
 |---|---|
-| `developers.hostinger.com` | `src/hostinger/client.js` line 6 (`baseUrl` default) |
+| `developers.hostinger.com` | `src/hostinger/client.js` line 7 (`baseUrl` default) |
 | User's VPS over SSH (port 22) | `src/ssh/connection.js` line 28 (`port: args.port \|\| 22`) |
 | `get.docker.com` | `src/deploy/deploy-aquila.js` line 45 |
 | `dl.cloudsmith.io` (Caddy apt) | `src/deploy/https.js` lines 26-29 |

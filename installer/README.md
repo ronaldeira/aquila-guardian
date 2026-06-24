@@ -126,8 +126,9 @@ Returns: { ok: true, publicUrl: string }
 Derives `publicUrl` as `https://<ip-dashes>.sslip.io` (e.g.
 `https://203-0-113-5.sslip.io`). Installs Caddy from its official apt repo if
 not present, writes a Caddyfile that reverse-proxies to `localhost:port`, then
-reloads Caddy. After Caddy is running it appends `PUBLIC_HOST=<publicUrl>` to
-`.env` and restarts the container so Twilio webhook URLs are correct.
+reloads Caddy. After Caddy is running it sets `PUBLIC_HOST=<publicUrl>` in
+`.env` (removing any existing `PUBLIC_HOST=` line first, so re-runs don't
+duplicate it), then restarts Aquila.
 
 `ipToSslip(ip)` is also exported as a standalone utility.
 
