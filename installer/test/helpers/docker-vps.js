@@ -1,4 +1,4 @@
-var { execFileSync, execFile } = require('child_process');
+var { execFileSync } = require('child_process');
 
 // Boots an Ubuntu+sshd container to act as the "VPS". Requires Docker on the host.
 // Uses host networking is avoided; we map a random high port to 22.
