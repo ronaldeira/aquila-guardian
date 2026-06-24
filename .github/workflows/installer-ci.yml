@@ -1,0 +1,23 @@
+name: installer-ci
+on:
+  push:
+    paths: ['installer/**', '.github/workflows/installer-ci.yml']
+  pull_request:
+    paths: ['installer/**']
+jobs:
+  unit:
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: installer } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20' }
+      - run: npm install
+      - run: npm test
+      - name: Dependency audit (high+)
+        run: npm audit --omit=dev --audit-level=high
+      - name: Secret scan (no secrets committed)
+        run: |
+          ! grep -rEn '(TWILIO_AUTH_TOKEN|ADMIN_PASSWORD|WEBHOOK_SECRET)=[^\s]+' \
+            --include='*.js' --include='*.json' src test || \
+            (echo 'Secret-looking value committed' && exit 1)
