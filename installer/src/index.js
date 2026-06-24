@@ -31,7 +31,7 @@ async function runInstall(opts) {
 
   // Connect SSH.
   var connectFn = deps.connectSsh || connectSsh;
-  var conn = await connectFn(Object.assign({ host: ip }, deps.sshTarget || {}));
+  var conn = await connectFn(Object.assign({}, deps.sshTarget || {}, { host: ip }));
   if (conn.ok === false) return conn;
   var ssh = conn.ssh;
 

@@ -3,6 +3,7 @@ var assert = require('node:assert');
 var fs = require('fs'); var os = require('os'); var path = require('path');
 var { makeFakeSsh } = require('./helpers/fake-ssh');
 var { runInstall } = require('../src/index');
+var { ERROR_CODES } = require('../src/result');
 
 function stateDir() { return fs.mkdtempSync(path.join(os.tmpdir(), 'aq-orch-')); }
 
@@ -52,11 +53,16 @@ test('resume: second run with completed state still returns url', async function
 });
 
 test('putFile rejection resolves to structured fail (does not throw)', async function () {
-  var ssh = {
-    exec: function () { return Promise.resolve({ code: 0, stdout: 'Docker version 27', stderr: '' }); },
-    putFile: function () { return Promise.reject(new Error('boom')); },
-    close: function () {}
-  };
+  var ssh = makeFakeSsh({ responses: {
+    '/etc/os-release': { code: 0, stdout: 'ID=ubuntu', stderr: '' },
+    'sudo -n true': { code: 0, stdout: '', stderr: '' },
+    'curl': { code: 0, stdout: '203.0.113.5', stderr: '' },
+    'docker --version': { code: 0, stdout: 'Docker version 27', stderr: '' },
+    'docker compose': { code: 0, stdout: '', stderr: '' },
+    'caddy version': { code: 0, stdout: 'v2', stderr: '' },
+    'systemctl reload caddy': { code: 0, stdout: '', stderr: '' }
+  }});
+  ssh.putFile = function () { return Promise.reject(new Error('boom')); };
   var deps = {
     sshTarget: { host: '10.0.0.1', password: 'pw' },
     connectSsh: function () { return Promise.resolve({ ok: true, ssh: ssh }); },
@@ -73,5 +79,5 @@ test('putFile rejection resolves to structured fail (does not throw)', async fun
     deps: deps
   });
   assert.strictEqual(r.ok, false);
-  assert.ok(r.code, 'structured fail must have a code');
+  assert.strictEqual(r.code, ERROR_CODES.DEPLOY_FAILED);
 });
