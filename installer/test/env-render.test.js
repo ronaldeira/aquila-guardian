@@ -17,6 +17,7 @@ test('renders required + telegram-only env', function () {
 test('includes PUBLIC_HOST when provided', function () {
   var r = renderEnv({ ADMIN_PASSWORD: 'pw', TELEGRAM_BOT_TOKEN: 'tg' },
                     { webhookSecret: WH, publicHost: 'https://1-2-3-4.sslip.io' });
+  assert.strictEqual(r.ok, true);
   assert.match(r.env, /^PUBLIC_HOST=https:\/\/1-2-3-4\.sslip\.io$/m);
 });
 
@@ -28,6 +29,12 @@ test('fails when admin password missing', function () {
 
 test('fails when no alert channel configured', function () {
   var r = renderEnv({ ADMIN_PASSWORD: 'pw' }, { webhookSecret: WH });
+  assert.strictEqual(r.ok, false);
+  assert.strictEqual(r.code, 'BAD_INPUT');
+});
+
+test('fails when webhook secret missing', function () {
+  var r = renderEnv({ ADMIN_PASSWORD: 'pw', TELEGRAM_BOT_TOKEN: 'tg' }, {});
   assert.strictEqual(r.ok, false);
   assert.strictEqual(r.code, 'BAD_INPUT');
 });
