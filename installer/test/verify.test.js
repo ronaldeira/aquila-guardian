@@ -24,3 +24,14 @@ test('fails after retries exhausted', async function () {
   assert.strictEqual(r.ok, false);
   assert.strictEqual(r.code, 'HEALTH_FAILED');
 });
+
+test('200 with non-ok body status is not healthy', async function () {
+  var fetchImpl = function () {
+    return Promise.resolve({ ok: true, status: 200,
+      json: function () { return Promise.resolve({ status: 'error' }); } });
+  };
+  var r = await verifyDeployment({ publicUrl: 'https://h.sslip.io',
+    fetchImpl: fetchImpl, retries: 2, sleep: noSleep });
+  assert.strictEqual(r.ok, false);
+  assert.strictEqual(r.code, 'HEALTH_FAILED');
+});

@@ -27,3 +27,13 @@ test('configures caddy and returns public url', async function () {
   assert.ok(caddy.indexOf('203-0-113-5.sslip.io') !== -1);
   assert.ok(caddy.indexOf('reverse_proxy localhost:3000') !== -1);
 });
+
+test('returns HTTPS_FAILED when caddy reload fails', async function () {
+  var ssh = makeFakeSsh({ responses: {
+    'caddy version': { code: 0, stdout: 'v2', stderr: '' },
+    'systemctl reload caddy': { code: 1, stdout: '', stderr: 'port 80 in use' }
+  }});
+  var r = await setupHttps({ ssh: ssh, ip: '203.0.113.5', port: 3000, state: st() });
+  assert.strictEqual(r.ok, false);
+  assert.strictEqual(r.code, 'HTTPS_FAILED');
+});

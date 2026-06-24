@@ -30,3 +30,16 @@ test('times out when never ready', async function () {
   assert.strictEqual(r.ok, false);
   assert.strictEqual(r.code, 'TIMEOUT');
 });
+
+test('propagates structured fail from client mid-poll', async function () {
+  var failClient = {
+    request: function () {
+      return Promise.resolve({ ok: false, code: 'BAD_TOKEN',
+        message: 'Hostinger rejected the token (403)', hint: 'Re-check the API key.' });
+    }
+  };
+  var r = await waitForVps({ client: failClient, vpsId: 'vps-1', state: st(),
+    pollMs: 1, sleep: noSleep });
+  assert.strictEqual(r.ok, false);
+  assert.strictEqual(r.code, 'BAD_TOKEN');
+});
