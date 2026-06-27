@@ -226,7 +226,7 @@ const erc20TransferAbi = [
   },
 ] as const
 const WALLET_DATA_REFETCH_MS = 10 * 60 * 1000
-const WORKSHOP_PREFERENCES_STORAGE_KEY = 'pods-workshop-wallet-preferences'
+const WORKSHOP_PREFERENCES_STORAGE_KEY = 'aquila-wallet-preferences'
 const DEFAULT_USD_TO_BRL_RATE = 5.5
 const emptyWalletDataState: WalletDataState = {
   status: 'idle',
@@ -453,13 +453,13 @@ function App() {
       }}
     >
       <SmartWalletsProvider>
-        <WorkshopWallet />
+        <AquilaWallet />
       </SmartWalletsProvider>
     </PrivyProvider>
   )
 }
 
-function WorkshopWallet() {
+function AquilaWallet() {
   const { ready, authenticated, login, logout, user } = usePrivy()
   const { wallets } = useWallets()
   const { createWallet } = useCreateWallet()
@@ -977,7 +977,7 @@ function WorkshopWallet() {
 
   return (
     <main className="app-shell deframe-widget">
-      <section className="phone-screen" aria-label="Workshop smart wallet">
+      <section className="phone-screen" aria-label="Aquila smart wallet">
         <header className="phone-header">
           <button className="phone-header-button" type="button" onClick={() => setActiveTab('activity')} aria-label="Open activity">
             <Grid2X2 size={22} aria-hidden="true" />
@@ -1592,7 +1592,7 @@ function ActivityPanel({
         <History size={18} aria-hidden="true" />
         <h2>Activity</h2>
       </div>
-      <section className="preferences-panel" aria-label="Workshop settings">
+      <section className="preferences-panel" aria-label="Aquila Wallet settings">
         <label className="preference-field">
           <span>Language</span>
           <select value={preferences.language} onChange={(event) => onLanguageChange(event.target.value as WorkshopLanguage)}>

@@ -1,8 +1,8 @@
 {
-  "name": "pods-workshop-wallet",
+  "name": "aquila-wallet",
   "private": true,
   "version": "0.0.0",
-  "description": "Public Pods workshop wallet built with Privy smart wallets and Pods SDK.",
+  "description": "Aquila Wallet — a product-like Web3 wallet built with Privy smart wallets and the Pods SDK.",
   "license": "Apache-2.0",
   "type": "module",
   "scripts": {

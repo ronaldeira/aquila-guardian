@@ -1,6 +1,6 @@
-# Pods Workshop Wallet
+# Aquila Wallet
 
-A public workshop wallet that shows how to build a product-like Web3 wallet with Pods, Privy embedded wallets, and Privy smart wallets.
+Aquila Wallet is a product-like Web3 wallet built on Pods, Privy embedded wallets, and Privy smart wallets.
 
 This app is intentionally focused on the wallet experience: balances, history, crypto deposit, crypto withdraw/send, swap, earn, activity logs, supported chains, language/currency preferences, and light theme styling. On-ramp/off-ramp is out of scope for this workshop repo.
 
