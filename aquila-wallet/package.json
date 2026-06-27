@@ -1,0 +1,35 @@
+{
+  "name": "pods-workshop-wallet",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Public Pods workshop wallet built with Privy smart wallets and Pods SDK.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "typecheck": "tsc --noEmit",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.3",
+    "typescript": "~6.0.2",
+    "vite": "^8.1.0"
+  },
+  "dependencies": {
+    "@deframe-sdk/components": "0.1.91",
+    "@privy-io/react-auth": "2.25.0",
+    "@reduxjs/toolkit": "^2.12.0",
+    "buffer": "^6.0.3",
+    "lucide-react": "^1.21.0",
+    "permissionless": "0.2.57",
+    "pods-sdk": "0.2.83",
+    "react": "19.2.7",
+    "react-dom": "19.2.7",
+    "react-redux": "^9.3.0",
+    "redux": "^5.0.1",
+    "viem": "2.37.7"
+  }
+}
